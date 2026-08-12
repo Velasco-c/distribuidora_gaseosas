@@ -54,15 +54,6 @@ Registra los encargados de las sedes.
 | `id_encargado`     | INT          | PK            | Identificador único del encargado. |
 | `nombre_encargado` | VARCHAR(150) | NOT NULL      | Nombre del encargado.              |
 
-### Tabla: `almacenamientos`
-
-Registra la capacidad de almacenamiento asociada a las sedes.
-
-| Campo               | Tipo de dato | Restricciones | Descripción                       |
-| ------------------- | ------------ | ------------- | --------------------------------- |
-| `id_almacenamiento` | INT          | PK            | Identificador del almacenamiento. |
-| `capacidad`         | INT          | NOT NULL      | Capacidad disponible.             |
-
 ### Tabla: `sedes`
 
 Representa las sedes de la distribuidora.
@@ -73,7 +64,7 @@ Representa las sedes de la distribuidora.
 | `nombre_sede`       | VARCHAR(100) | NOT NULL      | Nombre de la sede.              |
 | `ubicacion_sede`    | VARCHAR(200) | NOT NULL      | Ubicación de la sede.           |
 | `id_encargado`      | INT          | FK            | Encargado de la sede.           |
-| `id_almacenamiento` | INT          | FK            | Almacenamiento de la sede.      |
+| `capacidad`         | INT          | NOT NULL      | Capacidad disponible.             |
 
 ### Tabla: `inventario`
 
@@ -119,7 +110,7 @@ Representa los productos incluidos dentro de cada pedido.
 | ----------------- | ------------- | ------------- | -------------------------------------------------------------- |
 | `id_pedido`       | INT           | PK, FK        | Pedido al que pertenece el detalle.                            |
 | `id_producto`     | INT           | PK, FK        | Producto incluido en el pedido.                                |
-| `detalles_pedido` | VARCHAR(255)  | NOT NULL      | Información o descripción relacionada con la línea del pedido. |
+| `descripcion `    | VARCHAR(255)  | NOT NULL      | Información o descripción relacionada con la línea del pedido. |
 | `precio_unitario` | DECIMAL(10,2) | NOT NULL      | Precio aplicado al producto en el pedido.                      |
 | `cantidad_pedida` | INT           | NOT NULL      | Cantidad solicitada.                                           |
 
@@ -151,7 +142,6 @@ por lo que `subtotal_linea` se considera un valor calculado.
 | `productos`       | `inventario`     | 1 : N        | `inventario.id_producto`     |
 | `sedes`           | `inventario`     | 1 : N        | `inventario.id_sede`         |
 | `encargados`      | `sedes`          | 1 : N        | `sedes.id_encargado`         |
-| `almacenamientos` | `sedes`          | 1 : N        | `sedes.id_almacenamiento`    |
 
 ---
 
@@ -175,8 +165,6 @@ erDiagram
     SEDES ||--o{ INVENTARIO : almacena
 
     ENCARGADOS ||--o{ SEDES : administra
-
-    ALMACENAMIENTOS ||--o{ SEDES : dispone
 
     CLIENTES {
         INT id_cliente PK
@@ -204,17 +192,12 @@ erDiagram
         VARCHAR nombre_encargado
     }
 
-    ALMACENAMIENTOS {
-        INT id_almacenamiento PK
-        INT capacidad
-    }
-
     SEDES {
         INT id_sede PK
         VARCHAR nombre_sede
         VARCHAR ubicacion_sede
         INT id_encargado FK
-        INT id_almacenamiento FK
+        INT capacidad
     }
 
     INVENTARIO {
@@ -234,7 +217,7 @@ erDiagram
     DETALLE_PEDIDO {
         INT id_pedido PK, FK
         INT id_producto PK, FK
-        VARCHAR detalles_pedido
+        VARCHAR descripcion
         DECIMAL precio_unitario
         INT cantidad_pedida
     }
@@ -425,7 +408,6 @@ clientes
 categorias
 productos
 encargados
-almacenamientos
 sedes
 inventario
 pedidos
