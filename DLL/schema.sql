@@ -1,3 +1,4 @@
+DROP DATABASE IF EXISTS distribuidora;
 CREATE DATABASE IF NOT EXISTS distribuidora;
 
 USE distribuidora;
@@ -7,22 +8,12 @@ USE distribuidora;
 -- ============================================================
 
 CREATE TABLE clientes (
-    id INT AUTO_INCREMENT,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     nombre_completo VARCHAR(150) NOT NULL,
-    identificacion VARCHAR(30) NOT NULL,
+    identificacion VARCHAR(30) NOT NULL UNIQUE,
     direccion VARCHAR(200) NOT NULL,
     telefono VARCHAR(30) NOT NULL,
-    correo VARCHAR(150) NOT NULL,
-
-    CONSTRAINT pk_clientes
-        PRIMARY KEY (id),
-
-    CONSTRAINT uq_clientes_identificacion
-        UNIQUE (identificacion),
-
-    CONSTRAINT uq_clientes_correo
-        UNIQUE (correo)
-
+    correo VARCHAR(150) NOT NULL
 ) ENGINE = InnoDB;
 
 
@@ -31,15 +22,8 @@ CREATE TABLE clientes (
 -- ============================================================
 
 CREATE TABLE categorias (
-    id INT AUTO_INCREMENT,
-    nombre VARCHAR(100) NOT NULL,
-
-    CONSTRAINT pk_categorias
-        PRIMARY KEY (id),
-
-    CONSTRAINT uq_categorias_nombre
-        UNIQUE (nombre)
-
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL
 ) ENGINE = InnoDB;
 
 
@@ -48,26 +32,11 @@ CREATE TABLE categorias (
 -- ============================================================
 
 CREATE TABLE productos (
-    id INT AUTO_INCREMENT,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(150) NOT NULL,
     categoria_id INT NOT NULL,
-    volumen_ml INT NOT NULL,
-
-    CONSTRAINT pk_productos
-        PRIMARY KEY (id),
-
-    CONSTRAINT fk_productos_categoria
-        FOREIGN KEY (categoria_id)
-        REFERENCES categorias (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT uq_productos_nombre_volumen
-        UNIQUE (nombre, volumen_ml),
-
-    CONSTRAINT chk_productos_volumen
-        CHECK (volumen_ml > 0)
-
+    volumen_ml INT NOT NULL CHECK(volumen_ml > 0),
+	FOREIGN KEY (categoria_id) REFERENCES categorias (id)
 ) ENGINE = InnoDB;
 
 
@@ -76,61 +45,22 @@ CREATE TABLE productos (
 -- ============================================================
 
 CREATE TABLE encargados (
-    id INT AUTO_INCREMENT,
-    nombre VARCHAR(150) NOT NULL,
-
-    CONSTRAINT pk_encargados
-        PRIMARY KEY (id)
-
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL
 ) ENGINE = InnoDB;
-
-
--- ============================================================
--- TABLA: almacenamientos
--- ============================================================
-
-CREATE TABLE almacenamientos (
-    id INT AUTO_INCREMENT,
-    capacidad INT NOT NULL,
-
-    CONSTRAINT pk_almacenamientos
-        PRIMARY KEY (id),
-
-    CONSTRAINT chk_almacenamientos_capacidad
-        CHECK (capacidad > 0)
-
-) ENGINE = InnoDB;
-
 
 -- ============================================================
 -- TABLA: sedes
 -- ============================================================
 
 CREATE TABLE sedes (
-    id INT AUTO_INCREMENT,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     ubicacion VARCHAR(200) NOT NULL,
     encargado_id INT NOT NULL,
-    almacenamiento_id INT NOT NULL,
-
-    CONSTRAINT pk_sedes
-        PRIMARY KEY (id),
-
-    CONSTRAINT uq_sedes_nombre
-        UNIQUE (nombre),
-
-    CONSTRAINT fk_sedes_encargado
-        FOREIGN KEY (encargado_id)
-        REFERENCES encargados (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT fk_sedes_almacenamiento
-        FOREIGN KEY (almacenamiento_id)
-        REFERENCES almacenamientos (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT
-
+    capacidad INT NOT NULL CHECK (capacidad > 0),
+	FOREIGN KEY (encargado_id) REFERENCES encargados (id),
+    FOREIGN KEY (almacenamiento_id) REFERENCES almacenamientos (id)
 ) ENGINE = InnoDB;
 
 
@@ -139,32 +69,12 @@ CREATE TABLE sedes (
 -- ============================================================
 
 CREATE TABLE inventario (
-    sede_id INT NOT NULL,
+    sede_id INT NOT NULL PRIMARY KEY,
     producto_id INT NOT NULL,
-    stock_actual INT NOT NULL DEFAULT 0,
-    stock_minimo INT NOT NULL DEFAULT 0,
-
-    CONSTRAINT pk_inventario
-        PRIMARY KEY (sede_id, producto_id),
-
-    CONSTRAINT fk_inventario_sede
-        FOREIGN KEY (sede_id)
-        REFERENCES sedes (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT fk_inventario_producto
-        FOREIGN KEY (producto_id)
-        REFERENCES productos (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT chk_inventario_stock_actual
-        CHECK (stock_actual >= 0),
-
-    CONSTRAINT chk_inventario_stock_minimo
-        CHECK (stock_minimo >= 0)
-
+    stock_actual INT NOT NULL DEFAULT 0 CHECK (stock_actual >= 0),
+    stock_minimo INT NOT NULL DEFAULT 0 CHECK (stock_minimo >= 0),
+    FOREIGN KEY (sede_id) REFERENCES sedes (id),
+    FOREIGN KEY (producto_id) REFERENCES productos (id)
 ) ENGINE = InnoDB;
 
 
@@ -173,26 +83,12 @@ CREATE TABLE inventario (
 -- ============================================================
 
 CREATE TABLE pedidos (
-    id INT AUTO_INCREMENT,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     cliente_id INT NOT NULL,
     sede_id INT NOT NULL,
-
-    CONSTRAINT pk_pedidos
-        PRIMARY KEY (id),
-
-    CONSTRAINT fk_pedidos_cliente
-        FOREIGN KEY (cliente_id)
-        REFERENCES clientes (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT fk_pedidos_sede
-        FOREIGN KEY (sede_id)
-        REFERENCES sedes (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT
-
+	FOREIGN KEY (cliente_id) REFERENCES clientes (id),
+	FOREIGN KEY (sede_id)	REFERENCES sedes (id)
 ) ENGINE = InnoDB;
 
 
@@ -203,29 +99,10 @@ CREATE TABLE pedidos (
 CREATE TABLE detalle_pedido (
     pedido_id INT NOT NULL,
     producto_id INT NOT NULL,
-    detalles_pedido VARCHAR(255) NOT NULL,
-    precio_unitario DECIMAL(10,2) NOT NULL,
-    cantidad INT NOT NULL,
-
-    CONSTRAINT pk_detalle_pedido
-        PRIMARY KEY (pedido_id, producto_id),
-
-    CONSTRAINT fk_detalle_pedido_pedido
-        FOREIGN KEY (pedido_id)
-        REFERENCES pedidos (id)
-        ON UPDATE CASCADE
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_detalle_pedido_producto
-        FOREIGN KEY (producto_id)
-        REFERENCES productos (id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT chk_detalle_pedido_precio
-        CHECK (precio_unitario >= 0),
-
-    CONSTRAINT chk_detalle_pedido_cantidad
-        CHECK (cantidad > 0)
-
+    descripcion VARCHAR(255) NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL CHECK (precio_unitario >= 0),
+    cantidad INT NOT NULL CHECK (cantidad > 0),
+    CONSTRAINT pk_detalle_pedido PRIMARY KEY (pedido_id, producto_id),
+    FOREIGN KEY (pedido_id) REFERENCES pedidos (id),
+	FOREIGN KEY (producto_id) REFERENCES productos (id)
 ) ENGINE = InnoDB;
