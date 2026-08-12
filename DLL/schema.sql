@@ -59,8 +59,7 @@ CREATE TABLE sedes (
     ubicacion VARCHAR(200) NOT NULL,
     encargado_id INT NOT NULL,
     capacidad INT NOT NULL CHECK (capacidad > 0),
-	FOREIGN KEY (encargado_id) REFERENCES encargados (id),
-    FOREIGN KEY (almacenamiento_id) REFERENCES almacenamientos (id)
+	FOREIGN KEY (encargado_id) REFERENCES encargados (id)
 ) ENGINE = InnoDB;
 
 
