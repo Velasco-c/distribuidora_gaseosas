@@ -79,17 +79,23 @@ Representa las sedes de la distribuidora.
 
 Relaciona los productos con las sedes y controla las existencias.
 
-| Campo          | Tipo de dato | Restricciones | Descripción                          |
-| -------------- | ------------ | ------------- | ------------------------------------ |
-| `id_producto`  | INT          | PK, FK        | Producto almacenado.                 |
-| `id_sede`      | INT          | PK, FK        | Sede donde se encuentra el producto. |
-| `stock_actual` | INT          | NOT NULL      | Existencia actual.                   |
-| `stock_minimo` | INT          | NOT NULL      | Existencia mínima establecida.       |
+| Campo          | Tipo de dato | Restricciones | Descripción                                     |
+| -------------- | ------------ | ------------- | ----------------------------------------------- |
+| `id_producto`  | INT          | PK, FK        | Producto almacenado.                            |
+| `id_sede`      | INT          | PK, FK        | Sede donde se encuentra el producto.            |
+| `stock_actual` | INT          | NOT NULL      | Existencia actual del producto en la sede.      |
+| `stock_minimo` | INT          | NOT NULL      | Existencia mínima establecida para el producto. |
 
 La clave primaria es compuesta:
 
 ```text
 id_producto + id_sede
+```
+
+El stock se encuentra en esta tabla porque depende de la combinación del producto y la sede:
+
+```text
+id_producto + id_sede -> stock_actual, stock_minimo
 ```
 
 ### Tabla: `pedidos`
@@ -103,24 +109,33 @@ Representa la información general de cada pedido.
 | `id_cliente`   | INT          | FK            | Cliente que realiza el pedido.  |
 | `id_sede`      | INT          | FK            | Sede asociada al pedido.        |
 
-> Los productos, cantidades, precios y subtotales no se almacenan directamente en esta tabla porque corresponden al detalle del pedido.
+El total del pedido puede obtenerse a partir de los detalles, por lo que `total_pedido_sin_iva` se considera un valor calculado y no es necesario almacenarlo directamente.
 
 ### Tabla: `detalle_pedido`
 
-Representa los productos incluidos en cada pedido.
+Representa los productos incluidos dentro de cada pedido.
 
-| Campo             | Tipo de dato  | Restricciones | Descripción                         |
-| ----------------- | ------------- | ------------- | ----------------------------------- |
-| `id_pedido`       | INT           | PK, FK        | Pedido al que pertenece el detalle. |
-| `id_producto`     | INT           | PK, FK        | Producto incluido en el pedido.     |
-| `precio_unitario` | DECIMAL(10,2) | NOT NULL      | Precio aplicado al producto.        |
-| `cantidad_pedida` | INT           | NOT NULL      | Cantidad solicitada.                |
+| Campo             | Tipo de dato  | Restricciones | Descripción                                                    |
+| ----------------- | ------------- | ------------- | -------------------------------------------------------------- |
+| `id_pedido`       | INT           | PK, FK        | Pedido al que pertenece el detalle.                            |
+| `id_producto`     | INT           | PK, FK        | Producto incluido en el pedido.                                |
+| `detalles_pedido` | VARCHAR(255)  | NOT NULL      | Información o descripción relacionada con la línea del pedido. |
+| `precio_unitario` | DECIMAL(10,2) | NOT NULL      | Precio aplicado al producto en el pedido.                      |
+| `cantidad_pedida` | INT           | NOT NULL      | Cantidad solicitada.                                           |
 
 La clave primaria es compuesta:
 
 ```text
 id_pedido + id_producto
 ```
+
+El subtotal de cada línea puede obtenerse mediante:
+
+```text
+precio_unitario * cantidad_pedida
+```
+
+por lo que `subtotal_linea` se considera un valor calculado.
 
 ---
 
@@ -219,6 +234,7 @@ erDiagram
     DETALLE_PEDIDO {
         INT id_pedido PK, FK
         INT id_producto PK, FK
+        VARCHAR detalles_pedido
         DECIMAL precio_unitario
         INT cantidad_pedida
     }
@@ -230,105 +246,118 @@ erDiagram
 
 ### Primera Forma Normal (1FN)
 
-La relación inicial contenía información de clientes, productos, pedidos, sedes e inventario en una misma estructura.
+La relación inicial contenía información de clientes, productos, pedidos, sedes e inventario dentro de una misma estructura.
 
-Los datos se identificaron y organizaron en valores individuales para poder separar posteriormente las entidades.
+Los atributos fueron identificados y organizados para poder separar posteriormente las entidades.
 
 ### Segunda Forma Normal (2FN)
 
 Se eliminaron las dependencias parciales.
 
-Los datos propios de productos, clientes, categorías, sedes y demás entidades fueron separados de los datos que dependen de combinaciones de claves.
+La información propia de cada entidad se separó de los datos que dependen de una combinación de claves.
 
-El caso principal es `detalle_pedido`, donde los datos de la línea dependen de:
+En `detalle_pedido`, por ejemplo, los datos propios de una línea dependen de:
 
 ```text
 id_pedido + id_producto
+```
+
+Por otro lado, el inventario depende de:
+
+```text
+id_producto + id_sede
 ```
 
 ### Tercera Forma Normal (3FN)
 
 Se eliminaron las dependencias transitivas.
 
-Por ejemplo, el nombre de una categoría no se almacena dentro de `productos`. En su lugar:
+Por ejemplo:
 
 ```text
-productos
+PRODUCTOS
     └── id_categoria
 
-categorias
+CATEGORIAS
     └── categoria_producto
 ```
 
-De igual manera, el stock se mantiene en `inventario` porque depende de:
+De esta forma, el nombre de la categoría no necesita repetirse dentro de cada producto.
+
+También se separó el inventario porque:
 
 ```text
 id_producto + id_sede
+    -> stock_actual
+    -> stock_minimo
 ```
 
 ---
 
-## 6. Campos separados durante la normalización
+## 6. Distribución de los campos originales
 
-La tabla original de pedidos contenía información perteneciente a diferentes entidades.
+La relación inicial `pedidos` contenía los siguientes campos:
 
-Los campos se distribuyeron de la siguiente manera:
+| Campo original         | Ubicación después de la normalización  |
+| ---------------------- | -------------------------------------- |
+| `id_pedido`            | `pedidos`                              |
+| `id_producto`          | `detalle_pedido`                       |
+| `id_cliente`           | `pedidos`                              |
+| `id_sede`              | `pedidos`                              |
+| `detalles_pedido`      | `detalle_pedido`                       |
+| `precio_unitario`      | `detalle_pedido`                       |
+| `stock_actual`         | `inventario`                           |
+| `stock_minimo`         | `inventario`                           |
+| `cantidad_pedida`      | `detalle_pedido`                       |
+| `subtotal_linea`       | Calculado en `detalle_pedido`          |
+| `total_pedido_sin_iva` | Calculado a partir de `detalle_pedido` |
 
-| Campo original         | Tabla normalizada |
-| ---------------------- | ----------------- |
-| `id_pedido`            | `pedidos`         |
-| `id_cliente`           | `pedidos`         |
-| `id_sede`              | `pedidos`         |
-| `id_producto`          | `detalle_pedido`  |
-| `detalles_pedido`      | `detalle_pedido`  |
-| `precio_unitario`      | `detalle_pedido`  |
-| `cantidad_pedida`      | `detalle_pedido`  |
-| `stock_actual`         | `inventario`      |
-| `stock_minimo`         | `inventario`      |
-| `subtotal_linea`       | Calculado         |
-| `total_pedido_sin_iva` | Calculado         |
-
-Esta separación evita almacenar en `pedidos` información que realmente depende del producto, de la sede o de una línea específica del pedido.
+Esta distribución permite conservar la información original sin mantener todos los campos dentro de una sola tabla.
 
 ---
 
 ## 7. Valores calculados
 
-No se almacenan directamente los valores que pueden obtenerse mediante operaciones sobre los datos existentes.
+Algunos valores de la relación original pueden obtenerse a partir de otros datos.
 
-El subtotal de una línea puede calcularse como:
+### Subtotal de la línea
 
 ```text
 subtotal_linea =
 precio_unitario * cantidad_pedida
 ```
 
-El total del pedido puede obtenerse mediante la suma de los subtotales:
+El resultado depende de los datos de `detalle_pedido`.
+
+### Total del pedido
 
 ```text
 total_pedido_sin_iva =
 SUM(subtotal_linea)
 ```
 
-De esta forma se evita duplicar información derivada.
+El total depende de todas las líneas asociadas al pedido.
+
+Por esta razón, ambos valores pueden calcularse mediante consultas y no necesitan almacenarse físicamente.
 
 ---
 
 ## 8. Reglas principales
 
 * Todos los identificadores utilizan `INT`.
-* Las claves foráneas utilizan el mismo tipo que las claves primarias relacionadas.
+* Las claves foráneas utilizan el mismo tipo de dato que sus claves primarias.
 * `identificacion_cliente` debe ser única.
 * Cada producto pertenece a una categoría.
 * Cada pedido pertenece a un cliente y a una sede.
 * Cada pedido puede contener múltiples productos mediante `detalle_pedido`.
 * Un producto puede encontrarse en diferentes sedes mediante `inventario`.
 * El inventario se identifica mediante `id_producto + id_sede`.
-* El stock no pertenece a `pedidos`.
-* Los datos del cliente no se repiten en cada pedido.
-* Los datos del producto no se repiten en cada línea mediante información descriptiva.
-* El precio unitario se conserva en `detalle_pedido` porque corresponde al precio aplicado en ese pedido.
+* `stock_actual` y `stock_minimo` pertenecen a `inventario`.
+* `detalles_pedido`, `precio_unitario` y `cantidad_pedida` pertenecen a `detalle_pedido`.
+* El precio unitario se conserva en `detalle_pedido` porque representa el precio aplicado en ese pedido.
 * Los subtotales y totales pueden calcularse a partir de los datos almacenados.
+* Los datos del cliente no se repiten dentro de cada pedido.
+* Los datos descriptivos del producto no se repiten dentro de cada detalle.
 
 ---
 
@@ -340,7 +369,7 @@ De esta forma se evita duplicar información derivada.
 INT
 ```
 
-Utilizado para claves primarias y foráneas.
+Se utiliza para las claves primarias y foráneas.
 
 No se utilizan identificadores como:
 
@@ -359,7 +388,7 @@ como claves físicas de la base de datos.
 DECIMAL(10,2)
 ```
 
-Utilizado para `precio_unitario`.
+Se utiliza para `precio_unitario`.
 
 ### Valores numéricos
 
@@ -367,7 +396,7 @@ Utilizado para `precio_unitario`.
 INT
 ```
 
-Utilizado para cantidades, volumen, capacidad y existencias.
+Se utiliza para cantidades, volumen, capacidad y existencias.
 
 ### Texto
 
@@ -375,7 +404,7 @@ Utilizado para cantidades, volumen, capacidad y existencias.
 VARCHAR
 ```
 
-Utilizado para nombres, direcciones, correos e información descriptiva.
+Se utiliza para nombres, direcciones, correos, identificaciones y detalles.
 
 ### Fecha
 
@@ -383,7 +412,7 @@ Utilizado para nombres, direcciones, correos e información descriptiva.
 DATETIME
 ```
 
-Utilizado para registrar la fecha y hora de los pedidos.
+Se utiliza para registrar la fecha y hora de los pedidos.
 
 ---
 
@@ -403,6 +432,8 @@ pedidos
 detalle_pedido
 ```
 
-La separación de estas entidades permite mantener la información organizada mediante claves primarias y foráneas, reduciendo la redundancia y evitando dependencias parciales y transitivas.
+Los campos de la relación original no se eliminan, sino que se distribuyen entre las entidades correspondientes según sus dependencias.
 
-El resultado cumple conceptualmente con la **Tercera Forma Normal (3FN)**.
+El resultado permite mantener separados los datos de clientes, productos, pedidos, detalles e inventario, reduciendo la redundancia y evitando dependencias parciales y transitivas.
+
+El modelo cumple conceptualmente con la **Tercera Forma Normal (3FN)**.
