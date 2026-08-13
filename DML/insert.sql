@@ -45,18 +45,19 @@ INSERT INTO categorias (nombre) VALUES
 INSERT INTO productos (
     nombre,
     categoria_id,
-    volumen_ml
+    volumen_ml,
+    precio_unitario
 ) VALUES
-    ('Cola Original 600 ml', 1, 600),
-    ('Limón Refrescante 600 ml', 2, 600),
-    ('Naranja Tropical 600 ml', 3, 600),
-    ('Uva Intensa 600 ml', 4, 600),
-    ('Manzana Verde 600 ml', 5, 600),
-    ('Toronja Refrescante 600 ml', 6, 600),
-    ('Fresa Gasificada 600 ml', 7, 600),
-    ('Frutas Tropicales 600 ml', 8, 600),
-    ('Cola Sin Azúcar 600 ml', 9, 600),
-    ('Cola Tradicional 1.5 L', 10, 1500);
+    ('Cola Original 600 ml', 1, 600, 7.50),
+    ('Limón Refrescante 600 ml', 2, 600, 7.00),
+    ('Naranja Tropical 600 ml', 3, 600, 7.50),
+    ('Uva Intensa 600 ml', 4, 600, 7.50),
+    ('Manzana Verde 600 ml', 5, 600, 7.00),
+    ('Toronja Refrescante 600 ml', 6, 600, 7.50),
+    ('Fresa Gasificada 600 ml', 7, 600, 8.00),
+    ('Frutas Tropicales 600 ml', 8, 600, 8.00),
+    ('Cola Sin Azúcar 600 ml', 9, 600, 8.50),
+    ('Cola Tradicional 1.5 L', 10, 1500, 13.50);
 
 -- ============================================================
 -- DATOS: encargados
