@@ -1,41 +1,65 @@
-USE distribuidora;
+-- ============================================================
+-- VISTA: resumen de pedidos por sede
+-- Muestra cantidad de pedidos y total de ventas por sede.
+-- ============================================================
 
--- 1. Vista para consolidar el total de ventas por cliente
--- Permite saber cuánto ha comprado cada cliente en total.
-CREATE OR REPLACE VIEW view_ventas_por_cliente AS
-SELECT 
-    c.nombre_completo AS cliente,
-    SUM(dp.cantidad) AS total_productos_comprados,
-    SUM(dp.cantidad * dp.precio_unitario) AS total_gastado
-FROM clientes c
-JOIN pedidos p ON c.id = p.cliente_id
-JOIN detalle_pedido dp ON p.id = dp.pedido_id
-GROUP BY c.id, c.nombre_completo;
-
--- 2. Vista para consolidar el inventario por sede
--- Permite ver el stock actual frente al mínimo requerido y el porcentaje de ocupación
-CREATE OR REPLACE VIEW view_inventario_por_sede AS
-SELECT 
+CREATE VIEW vista_resumen_pedidos_por_sede AS
+SELECT
+    s.id AS sede_id,
     s.nombre AS sede,
+    COUNT(DISTINCT p.id) AS total_pedidos,
+    COALESCE(SUM(dp.cantidad * dp.precio_unitario), 0) AS total_ventas
+FROM sedes s
+LEFT JOIN pedidos p
+    ON s.id = p.sede_id
+LEFT JOIN detalle_pedido dp
+    ON p.id = dp.pedido_id
+GROUP BY
+    s.id,
+    s.nombre;
+
+
+-- ============================================================
+-- VISTA: productos bajo stock
+-- Lista productos cuyo stock actual es menor o igual
+-- al stock mínimo establecido.
+-- ============================================================
+
+CREATE VIEW vista_productos_bajo_stock AS
+SELECT
+    p.id AS producto_id,
     p.nombre AS producto,
-    i.stock_actual,
-    i.stock_minimo,
-    CASE 
-        WHEN i.stock_actual <= i.stock_minimo THEN 'Alerta: Stock Bajo'
-        ELSE 'Stock Normal'
-    END AS estado_stock
-FROM sedes s
-JOIN inventario i ON s.id = i.sede_id
-JOIN productos p ON i.producto_id = p.id;
-
--- 3. Vista para consolidar ventas por sede
--- Permite ver qué sede ha vendido más y cuántos pedidos ha procesado
-CREATE OR REPLACE VIEW view_ventas_por_sede AS
-SELECT 
+    s.id AS sede_id,
     s.nombre AS sede,
-    COUNT(p.id) AS total_pedidos_atendidos,
-    SUM(dp.cantidad) AS total_unidades_vendidas
-FROM sedes s
-JOIN pedidos p ON s.id = p.sede_id
-JOIN detalle_pedido dp ON p.id = dp.pedido_id
-GROUP BY s.id, s.nombre;
+    i.stock_actual,
+    i.stock_minimo
+FROM inventario i
+INNER JOIN productos p
+    ON i.producto_id = p.id
+INNER JOIN sedes s
+    ON i.sede_id = s.id
+WHERE i.stock_actual <= i.stock_minimo;
+
+
+-- ============================================================
+-- VISTA: clientes activos
+-- Muestra clientes que tienen al menos un pedido registrado.
+-- ============================================================
+
+CREATE VIEW vista_clientes_activos AS
+SELECT
+    c.id AS cliente_id,
+    c.nombre_completo,
+    c.identificacion,
+    c.telefono,
+    c.correo,
+    COUNT(p.id) AS total_pedidos
+FROM clientes c
+INNER JOIN pedidos p
+    ON c.id = p.cliente_id
+GROUP BY
+    c.id,
+    c.nombre_completo,
+    c.identificacion,
+    c.telefono,
+    c.correo;
