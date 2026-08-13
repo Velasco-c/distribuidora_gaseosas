@@ -44,6 +44,7 @@ Contiene la información propia de cada producto.
 | `nombre` | VARCHAR(150) | NOT NULL | Nombre del producto. |
 | `categoria_id` | INT | NOT NULL, FK | Categoría a la que pertenece el producto. |
 | `volumen_ml` | INT | NOT NULL, CHECK > 0 | Volumen del producto en mililitros. |
+| `precio_unitario` | DECIMAL(10,2) | NOT NULL, CHECK >= 0 | Precio aplicado al producto.        |
 
 ### Tabla: `encargados`
 
@@ -193,6 +194,7 @@ erDiagram
         VARCHAR nombre
         INT categoria_id FK
         INT volumen_ml
+        DECIMAL precio_unitario
     }
 
     ENCARGADOS {
