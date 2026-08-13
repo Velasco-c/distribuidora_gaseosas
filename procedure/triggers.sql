@@ -46,9 +46,9 @@ DELIMITER //
 CREATE TRIGGER tr_auditar_cambio_precio
 AFTER UPDATE ON productos FOR EACH ROW
 BEGIN
-    IF OLD.precio <> NEW.precio THEN
+    IF OLD.precio_unitario <> NEW.precio_unitario THEN
         INSERT INTO auditoria_precios ( producto_id, fecha_cambio,precio_anterior,precio_nuevo)
-        VALUES ( NEW.producto_id, NOW(),OLD.precio,NEW.precio);
+        VALUES ( NEW.producto_id, NOW(),OLD.precio_unitario,NEW.precio_unitario);
     END IF;
 END //
 DELIMITER ;
