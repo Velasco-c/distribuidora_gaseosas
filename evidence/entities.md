@@ -16,89 +16,97 @@ El diseño utiliza claves primarias y foráneas para relacionar las entidades y 
 
 Almacena la información de los clientes.
 
-| Campo                     | Tipo de dato | Restricciones | Descripción                      |
-| ------------------------- | ------------ | ------------- | -------------------------------- |
-| `id_cliente`              | INT          | PK            | Identificador único del cliente. |
-| `nombre_completo_cliente` | VARCHAR(150) | NOT NULL      | Nombre completo del cliente.     |
-| `identificacion_cliente`  | VARCHAR(30)  | UNIQUE        | Identificación del cliente.      |
-| `direccion_cliente`       | VARCHAR(200) | NOT NULL      | Dirección del cliente.           |
-| `telefono_cliente`        | VARCHAR(30)  | NOT NULL      | Teléfono del cliente.            |
-| `correo_cliente`          | VARCHAR(150) | NOT NULL      | Correo electrónico del cliente.  |
+| Campo | Tipo de dato | Restricciones | Descripción |
+| --- | --- | --- | --- |
+| `id` | INT | PK, AUTO_INCREMENT | Identificador único del cliente. |
+| `nombre_completo` | VARCHAR(150) | NOT NULL | Nombre completo del cliente. |
+| `identificacion` | VARCHAR(30) | NOT NULL, UNIQUE | Identificación única del cliente. |
+| `direccion` | VARCHAR(200) | NOT NULL | Dirección del cliente. |
+| `telefono` | VARCHAR(30) | NOT NULL | Teléfono del cliente. |
+| `correo` | VARCHAR(150) | NOT NULL | Correo electrónico del cliente. |
 
 ### Tabla: `categorias`
 
 Define las categorías de los productos.
 
-| Campo                | Tipo de dato | Restricciones | Descripción                          |
-| -------------------- | ------------ | ------------- | ------------------------------------ |
-| `id_categoria`       | INT          | PK            | Identificador único de la categoría. |
-| `categoria_producto` | VARCHAR(100) | NOT NULL      | Nombre de la categoría.              |
+| Campo | Tipo de dato | Restricciones | Descripción |
+| --- | --- | --- | --- |
+| `id` | INT | PK, AUTO_INCREMENT | Identificador único de la categoría. |
+| `nombre` | VARCHAR(100) | NOT NULL | Nombre de la categoría. |
 
 ### Tabla: `productos`
 
 Contiene la información propia de cada producto.
 
-| Campo             | Tipo de dato | Restricciones | Descripción                         |
-| ----------------- | ------------ | ------------- | ----------------------------------- |
-| `id_producto`     | INT          | PK            | Identificador único del producto.   |
-| `nombre_producto` | VARCHAR(150) | NOT NULL      | Nombre del producto.                |
-| `id_categoria`    | INT          | FK            | Categoría del producto.             |
-| `volumen_ml`      | INT          | NOT NULL      | Volumen del producto en mililitros. |
+| Campo | Tipo de dato | Restricciones | Descripción |
+| --- | --- | --- | --- |
+| `id` | INT | PK, AUTO_INCREMENT | Identificador único del producto. |
+| `nombre` | VARCHAR(150) | NOT NULL | Nombre del producto. |
+| `categoria_id` | INT | NOT NULL, FK | Categoría a la que pertenece el producto. |
+| `volumen_ml` | INT | NOT NULL, CHECK > 0 | Volumen del producto en mililitros. |
 
 ### Tabla: `encargados`
 
 Registra los encargados de las sedes.
 
-| Campo              | Tipo de dato | Restricciones | Descripción                        |
-| ------------------ | ------------ | ------------- | ---------------------------------- |
-| `id_encargado`     | INT          | PK            | Identificador único del encargado. |
-| `nombre_encargado` | VARCHAR(150) | NOT NULL      | Nombre del encargado.              |
+| Campo | Tipo de dato | Restricciones | Descripción |
+| --- | --- | --- | --- |
+| `id` | INT | PK, AUTO_INCREMENT | Identificador único del encargado. |
+| `nombre` | VARCHAR(150) | NOT NULL | Nombre del encargado. |
 
 ### Tabla: `sedes`
 
 Representa las sedes de la distribuidora.
 
-| Campo               | Tipo de dato | Restricciones | Descripción                     |
-| ------------------- | ------------ | ------------- | ------------------------------- |
-| `id_sede`           | INT          | PK            | Identificador único de la sede. |
-| `nombre_sede`       | VARCHAR(100) | NOT NULL      | Nombre de la sede.              |
-| `ubicacion_sede`    | VARCHAR(200) | NOT NULL      | Ubicación de la sede.           |
-| `id_encargado`      | INT          | FK            | Encargado de la sede.           |
-| `capacidad`         | INT          | NOT NULL      | Capacidad disponible.             |
+| Campo | Tipo de dato | Restricciones | Descripción |
+| --- | --- | --- | --- |
+| `id` | INT | PK, AUTO_INCREMENT | Identificador único de la sede. |
+| `nombre` | VARCHAR(100) | NOT NULL | Nombre de la sede. |
+| `ubicacion` | VARCHAR(200) | NOT NULL | Ubicación de la sede. |
+| `encargado_id` | INT | NOT NULL, FK | Encargado de la sede. |
+| `capacidad` | INT | NOT NULL, CHECK > 0 | Capacidad disponible de la sede. |
 
 ### Tabla: `inventario`
 
 Relaciona los productos con las sedes y controla las existencias.
 
-| Campo          | Tipo de dato | Restricciones | Descripción                                     |
-| -------------- | ------------ | ------------- | ----------------------------------------------- |
-| `id_producto`  | INT          | PK, FK        | Producto almacenado.                            |
-| `id_sede`      | INT          | PK, FK        | Sede donde se encuentra el producto.            |
-| `stock_actual` | INT          | NOT NULL      | Existencia actual del producto en la sede.      |
-| `stock_minimo` | INT          | NOT NULL      | Existencia mínima establecida para el producto. |
+| Campo | Tipo de dato | Restricciones | Descripción |
+| --- | --- | --- | --- |
+| `sede_id` | INT | PK, NOT NULL, FK | Sede donde se encuentra el registro de inventario. |
+| `producto_id` | INT | NOT NULL, FK | Producto registrado en el inventario. |
+| `stock_actual` | INT | NOT NULL, DEFAULT 0, CHECK >= 0 | Existencia actual del producto en la sede. |
+| `stock_minimo` | INT | NOT NULL, DEFAULT 0, CHECK >= 0 | Existencia mínima establecida para el producto. |
 
-La clave primaria es compuesta:
+La clave primaria actual es:
 
 ```text
-id_producto + id_sede
+sede_id
+````
+
+El registro de inventario se encuentra asociado a una sede mediante:
+
+```text
+sede_id -> sedes.id
 ```
 
-El stock se encuentra en esta tabla porque depende de la combinación del producto y la sede:
+El producto registrado en el inventario se relaciona mediante:
 
 ```text
-id_producto + id_sede -> stock_actual, stock_minimo
+producto_id -> productos.id
 ```
 
 ### Tabla: `pedidos`
 
 Representa la información general de cada pedido.
 
-| Campo          | Tipo de dato | Restricciones | Descripción                     |
-| -------------- | ------------ | ------------- | ------------------------------- |
-| `id_pedido`    | INT          | PK            | Identificador único del pedido. |
-| `fecha_pedido` | DATETIME     | NOT NULL      | Fecha y hora del pedido.        |
-| `id_cliente`   | INT          | FK            | Cliente que realiza el pedido.  |
-| `id_sede`      | INT          | FK            | Sede asociada al pedido.        |
+| Campo        | Tipo de dato | Restricciones                       | Descripción                     |
+| ------------ | ------------ | ----------------------------------- | ------------------------------- |
+| `id`         | INT          | PK, AUTO_INCREMENT                  | Identificador único del pedido. |
+| `fecha`      | DATETIME     | NOT NULL, DEFAULT CURRENT_TIMESTAMP | Fecha y hora del pedido.        |
+| `cliente_id` | INT          | NOT NULL, FK                        | Cliente que realiza el pedido.  |
+| `sede_id`    | INT          | NOT NULL, FK                        | Sede asociada al pedido.        |
+
+Un cliente puede realizar múltiples pedidos, por lo que la relación entre `clientes` y `pedidos` es de tipo **1 : N**.
 
 El total del pedido puede obtenerse a partir de los detalles, por lo que `total_pedido_sin_iva` se considera un valor calculado y no es necesario almacenarlo directamente.
 
@@ -106,24 +114,24 @@ El total del pedido puede obtenerse a partir de los detalles, por lo que `total_
 
 Representa los productos incluidos dentro de cada pedido.
 
-| Campo             | Tipo de dato  | Restricciones | Descripción                                                    |
-| ----------------- | ------------- | ------------- | -------------------------------------------------------------- |
-| `id_pedido`       | INT           | PK, FK        | Pedido al que pertenece el detalle.                            |
-| `id_producto`     | INT           | PK, FK        | Producto incluido en el pedido.                                |
-| `descripcion `    | VARCHAR(255)  | NOT NULL      | Información o descripción relacionada con la línea del pedido. |
-| `precio_unitario` | DECIMAL(10,2) | NOT NULL      | Precio aplicado al producto en el pedido.                      |
-| `cantidad_pedida` | INT           | NOT NULL      | Cantidad solicitada.                                           |
+| Campo             | Tipo de dato  | Restricciones        | Descripción                                      |
+| ----------------- | ------------- | -------------------- | ------------------------------------------------ |
+| `pedido_id`       | INT           | PK, FK               | Pedido al que pertenece el detalle.              |
+| `producto_id`     | INT           | PK, FK               | Producto incluido en el pedido.                  |
+| `descripcion`     | VARCHAR(255)  | NOT NULL             | Descripción relacionada con la línea del pedido. |
+| `precio_unitario` | DECIMAL(10,2) | NOT NULL, CHECK >= 0 | Precio aplicado al producto en el pedido.        |
+| `cantidad`        | INT           | NOT NULL, CHECK > 0  | Cantidad solicitada.                             |
 
 La clave primaria es compuesta:
 
 ```text
-id_pedido + id_producto
+pedido_id + producto_id
 ```
 
 El subtotal de cada línea puede obtenerse mediante:
 
 ```text
-precio_unitario * cantidad_pedida
+precio_unitario * cantidad
 ```
 
 por lo que `subtotal_linea` se considera un valor calculado.
@@ -132,16 +140,16 @@ por lo que `subtotal_linea` se considera un valor calculado.
 
 ## 3. Relaciones
 
-| Tabla padre       | Tabla hija       | Cardinalidad | Clave foránea                |
-| ----------------- | ---------------- | ------------ | ---------------------------- |
-| `clientes`        | `pedidos`        | 1 : N        | `pedidos.id_cliente`         |
-| `sedes`           | `pedidos`        | 1 : N        | `pedidos.id_sede`            |
-| `pedidos`         | `detalle_pedido` | 1 : N        | `detalle_pedido.id_pedido`   |
-| `productos`       | `detalle_pedido` | 1 : N        | `detalle_pedido.id_producto` |
-| `categorias`      | `productos`      | 1 : N        | `productos.id_categoria`     |
-| `productos`       | `inventario`     | 1 : N        | `inventario.id_producto`     |
-| `sedes`           | `inventario`     | 1 : N        | `inventario.id_sede`         |
-| `encargados`      | `sedes`          | 1 : N        | `sedes.id_encargado`         |
+| Tabla padre  | Tabla hija       | Cardinalidad | Clave foránea                |
+| ------------ | ---------------- | ------------ | ---------------------------- |
+| `clientes`   | `pedidos`        | 1 : N        | `pedidos.cliente_id`         |
+| `sedes`      | `pedidos`        | 1 : N        | `pedidos.sede_id`            |
+| `pedidos`    | `detalle_pedido` | 1 : N        | `detalle_pedido.pedido_id`   |
+| `productos`  | `detalle_pedido` | 1 : N        | `detalle_pedido.producto_id` |
+| `categorias` | `productos`      | 1 : N        | `productos.categoria_id`     |
+| `productos`  | `inventario`     | 1 : N        | `inventario.producto_id`     |
+| `sedes`      | `inventario`     | 1 : 1        | `inventario.sede_id`         |
+| `encargados` | `sedes`          | 1 : N        | `sedes.encargado_id`         |
 
 ---
 
@@ -162,64 +170,64 @@ erDiagram
 
     PRODUCTOS ||--o{ INVENTARIO : registra
 
-    SEDES ||--o{ INVENTARIO : almacena
+    SEDES ||--|| INVENTARIO : almacena
 
     ENCARGADOS ||--o{ SEDES : administra
 
     CLIENTES {
-        INT id_cliente PK
-        VARCHAR nombre_completo_cliente
-        VARCHAR identificacion_cliente UK
-        VARCHAR direccion_cliente
-        VARCHAR telefono_cliente
-        VARCHAR correo_cliente
+        INT id PK
+        VARCHAR nombre_completo
+        VARCHAR identificacion UK
+        VARCHAR direccion
+        VARCHAR telefono
+        VARCHAR correo
     }
 
     CATEGORIAS {
-        INT id_categoria PK
-        VARCHAR categoria_producto
+        INT id PK
+        VARCHAR nombre
     }
 
     PRODUCTOS {
-        INT id_producto PK
-        VARCHAR nombre_producto
-        INT id_categoria FK
+        INT id PK
+        VARCHAR nombre
+        INT categoria_id FK
         INT volumen_ml
     }
 
     ENCARGADOS {
-        INT id_encargado PK
-        VARCHAR nombre_encargado
+        INT id PK
+        VARCHAR nombre
     }
 
     SEDES {
-        INT id_sede PK
-        VARCHAR nombre_sede
-        VARCHAR ubicacion_sede
-        INT id_encargado FK
+        INT id PK
+        VARCHAR nombre
+        VARCHAR ubicacion
+        INT encargado_id FK
         INT capacidad
     }
 
     INVENTARIO {
-        INT id_producto PK, FK
-        INT id_sede PK, FK
+        INT sede_id PK, FK
+        INT producto_id FK
         INT stock_actual
         INT stock_minimo
     }
 
     PEDIDOS {
-        INT id_pedido PK
-        DATETIME fecha_pedido
-        INT id_cliente FK
-        INT id_sede FK
+        INT id PK
+        DATETIME fecha
+        INT cliente_id FK
+        INT sede_id FK
     }
 
     DETALLE_PEDIDO {
-        INT id_pedido PK, FK
-        INT id_producto PK, FK
+        INT pedido_id PK, FK
+        INT producto_id PK, FK
         VARCHAR descripcion
         DECIMAL precio_unitario
-        INT cantidad_pedida
+        INT cantidad
     }
 ```
 
@@ -242,13 +250,7 @@ La información propia de cada entidad se separó de los datos que dependen de u
 En `detalle_pedido`, por ejemplo, los datos propios de una línea dependen de:
 
 ```text
-id_pedido + id_producto
-```
-
-Por otro lado, el inventario depende de:
-
-```text
-id_producto + id_sede
+pedido_id + producto_id
 ```
 
 ### Tercera Forma Normal (3FN)
@@ -259,20 +261,22 @@ Por ejemplo:
 
 ```text
 PRODUCTOS
-    └── id_categoria
+    └── categoria_id
 
 CATEGORIAS
-    └── categoria_producto
+    └── nombre
 ```
 
 De esta forma, el nombre de la categoría no necesita repetirse dentro de cada producto.
 
-También se separó el inventario porque:
+También se separó la información de los encargados de las sedes:
 
 ```text
-id_producto + id_sede
-    -> stock_actual
-    -> stock_minimo
+SEDES
+    └── encargado_id
+
+ENCARGADOS
+    └── nombre
 ```
 
 ---
@@ -283,15 +287,15 @@ La relación inicial `pedidos` contenía los siguientes campos:
 
 | Campo original         | Ubicación después de la normalización  |
 | ---------------------- | -------------------------------------- |
-| `id_pedido`            | `pedidos`                              |
-| `id_producto`          | `detalle_pedido`                       |
-| `id_cliente`           | `pedidos`                              |
-| `id_sede`              | `pedidos`                              |
-| `detalles_pedido`      | `detalle_pedido`                       |
-| `precio_unitario`      | `detalle_pedido`                       |
-| `stock_actual`         | `inventario`                           |
-| `stock_minimo`         | `inventario`                           |
-| `cantidad_pedida`      | `detalle_pedido`                       |
+| `id_pedido`            | `pedidos.id`                           |
+| `id_producto`          | `detalle_pedido.producto_id`           |
+| `id_cliente`           | `pedidos.cliente_id`                   |
+| `id_sede`              | `pedidos.sede_id`                      |
+| `detalles_pedido`      | `detalle_pedido.descripcion`           |
+| `precio_unitario`      | `detalle_pedido.precio_unitario`       |
+| `stock_actual`         | `inventario.stock_actual`              |
+| `stock_minimo`         | `inventario.stock_minimo`              |
+| `cantidad_pedida`      | `detalle_pedido.cantidad`              |
 | `subtotal_linea`       | Calculado en `detalle_pedido`          |
 | `total_pedido_sin_iva` | Calculado a partir de `detalle_pedido` |
 
@@ -307,7 +311,7 @@ Algunos valores de la relación original pueden obtenerse a partir de otros dato
 
 ```text
 subtotal_linea =
-precio_unitario * cantidad_pedida
+precio_unitario * cantidad
 ```
 
 El resultado depende de los datos de `detalle_pedido`.
@@ -329,14 +333,16 @@ Por esta razón, ambos valores pueden calcularse mediante consultas y no necesit
 
 * Todos los identificadores utilizan `INT`.
 * Las claves foráneas utilizan el mismo tipo de dato que sus claves primarias.
-* `identificacion_cliente` debe ser única.
+* `identificacion` debe ser única.
 * Cada producto pertenece a una categoría.
+* Cada sede tiene un encargado.
 * Cada pedido pertenece a un cliente y a una sede.
+* Un cliente puede realizar múltiples pedidos.
 * Cada pedido puede contener múltiples productos mediante `detalle_pedido`.
-* Un producto puede encontrarse en diferentes sedes mediante `inventario`.
-* El inventario se identifica mediante `id_producto + id_sede`.
+* Un producto puede aparecer en múltiples pedidos.
+* La combinación `pedido_id + producto_id` identifica de forma única cada detalle de pedido.
 * `stock_actual` y `stock_minimo` pertenecen a `inventario`.
-* `detalles_pedido`, `precio_unitario` y `cantidad_pedida` pertenecen a `detalle_pedido`.
+* `descripcion`, `precio_unitario` y `cantidad` pertenecen a `detalle_pedido`.
 * El precio unitario se conserva en `detalle_pedido` porque representa el precio aplicado en ese pedido.
 * Los subtotales y totales pueden calcularse a partir de los datos almacenados.
 * Los datos del cliente no se repiten dentro de cada pedido.
@@ -387,7 +393,7 @@ Se utiliza para cantidades, volumen, capacidad y existencias.
 VARCHAR
 ```
 
-Se utiliza para nombres, direcciones, correos, identificaciones y detalles.
+Se utiliza para nombres, direcciones, correos, identificaciones y descripciones.
 
 ### Fecha
 
