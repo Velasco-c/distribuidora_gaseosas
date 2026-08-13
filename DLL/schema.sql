@@ -35,6 +35,7 @@ CREATE TABLE productos (
     nombre VARCHAR(150) NOT NULL,
     categoria_id INT NOT NULL,
     volumen_ml INT NOT NULL CHECK (volumen_ml > 0),
+    precio_unitario DECIMAL(10, 2) NOT NULL CHECK (precio_unitario >= 0),
     FOREIGN KEY (categoria_id) REFERENCES categorias (id)
 ) ENGINE = InnoDB;
 
