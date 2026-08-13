@@ -44,18 +44,30 @@ CREATE TABLE IF NOT EXISTS auditoria_precios (
 
 DELIMITER //
 CREATE TRIGGER tr_auditar_cambio_precio
-AFTER UPDATE ON productos FOR EACH ROW
+AFTER UPDATE ON productos
+FOR EACH ROW
 BEGIN
     IF OLD.precio_unitario <> NEW.precio_unitario THEN
-        INSERT INTO auditoria_precios ( producto_id, fecha_cambio,precio_anterior,precio_nuevo)
-        VALUES ( NEW.producto_id, NOW(),OLD.precio_unitario,NEW.precio_unitario);
+        INSERT INTO auditoria_precios (producto_id, fecha_cambio, precio_anterior, precio_nuevo)
+        VALUES (NEW.id,NOW(),OLD.precio_unitario,NEW.precio_unitario);
     END IF;
 END //
 DELIMITER ;
-
 -- Consultar los datos
 SELECT * FROM auditoria_precios;
 
 
+UPDATE productos
+SET precio_unitario = 15.00
+WHERE id = 10;
+
+UPDATE productos
+SET precio_unitario = 16.50
+WHERE id = 10;
+
+SELECT *
+FROM auditoria_precios
+WHERE producto_id = 10
+ORDER BY fecha_cambio DESC;
 
 	
