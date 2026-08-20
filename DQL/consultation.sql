@@ -152,3 +152,27 @@ GROUP BY
     s.nombre,
     s.ubicacion
 ORDER BY total_ventas DESC;
+
+
+/*
+======================================================================
+                        EXAMEN
+======================================================================
+*/
+
+/*
+Realizar una consulta con subconsulta que:
+Muestre el nombre del producto, categoría y stock
+Solo incluya los productos cuyo precio sea mayor al promedio general de precios de todos los productos.
+Crear un trigger llamado auditar_cambio_precio que:
+Se ejecute después de un UPDATE en la tabla de productos.
+*/
+
+USE distribuidora;
+
+SELECT p.nombre as productos , c.nombre AS categoria,i.stock_actual
+FROM productos p
+INNER JOIN inventario i ON i.producto_id = p.id
+INNER JOIN categorias c ON c.id = p.categoria_id
+GROUP BY p.nombre, c.nombre ,i.stock_actual
+HAVING  p.precio_unitario > AVG(p.precio_unitario);
