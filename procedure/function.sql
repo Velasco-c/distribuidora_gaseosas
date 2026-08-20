@@ -47,3 +47,52 @@ DETERMINISTIC
 DELIMITER ; 
     
 SELECT fn_validar_stock(1, 500);
+
+
+
+/*
+=======================================================================
+														EXAMEN
+=======================================================================
+*/
+
+
+/*
+==========================================================================
+    Crear una función MySQL llamada calcular_promedio_pedidos_cliente que:
+    Reciba como parámetro el ID de un cliente.
+    Retorne el promedio del total (sin IVA) de todos los pedidos realizados por ese cliente.
+    Si el cliente no tiene pedidos, retorne 0.
+==========================================================================
+*/
+
+
+DROP FUNCTION IF EXISTS fn_calcular_promedio_pedidos;
+
+DELIMITER //
+
+CREATE FUNCTION fn_calcular_promedio_pedidos(id_cliente INT)
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+    DECLARE promedio DECIMAL(10,2);
+
+    SELECT COALESCE(AVG(total_pedido), 0)
+    INTO promedio
+    FROM (
+        SELECT
+            p.id,
+            SUM(dp.precio_unitario * dp.cantidad) AS total_pedido
+        FROM pedidos p
+        INNER JOIN detalle_pedido dp
+            ON dp.pedido_id = p.id
+        WHERE p.cliente_id = id_cliente
+        GROUP BY p.id
+    ) AS pedidos_cliente;
+
+    RETURN promedio;
+END//
+
+DELIMITER ;
+
+SELECT fn_calcular_promedio_pedidos(1);
