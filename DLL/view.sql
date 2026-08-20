@@ -63,3 +63,42 @@ GROUP BY
     c.identificacion,
     c.telefono,
     c.correo;
+
+
+/*
+========================================================
+                    EXAMEN
+=======================================================
+*/
+
+/*
+Crear una vista llamada vista_resumen_sedes que:
+Muestre por cada sede:
+Nombre de la sede
+Cantidad total de pedidos despachados
+Valor total vendido (sin IVA)
+Promedio de valor por pedido
+La vista debe usar JOIN entre pedidos y sedes, y agrupar correctamente los resultados.
+*/
+
+DROP VIEW IF EXISTS vista_resumen_sedes;
+
+CREATE VIEW vista_resumen_sedes AS
+SELECT
+    s.nombre AS sede,
+    COUNT(DISTINCT p.id) AS total_pedidos,
+    COALESCE(SUM(dp.cantidad * dp.precio_unitario), 0) AS total_ventas,
+    COALESCE(
+        SUM(dp.cantidad * dp.precio_unitario) / NULLIF(COUNT(DISTINCT p.id), 0),
+        0
+    ) AS promedio_valor_pedido
+FROM sedes s
+LEFT JOIN pedidos p
+    ON s.id = p.sede_id
+LEFT JOIN detalle_pedido dp
+    ON p.id = dp.pedido_id
+GROUP BY
+    s.id,
+    s.nombre;
+    
+SELECT * FROM  vista_resumen_sedes;
