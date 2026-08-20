@@ -7,14 +7,24 @@ USE distribuidora;
 */
 
 DELIMITER //
+
 CREATE TRIGGER tr_actualizar_stock
-AFTER INSERT ON detalle_pedido FOR EACH ROW
-BEGIN 
-	IF NEW.cantidad > 0 THEN
-	UPDATE inventario
-	SET stock_actual = stock_actual - NEW.cantidad
-	WHERE producto_id = NEW.producto_id	;
-	  END IF;
+AFTER INSERT ON detalle_pedido
+FOR EACH ROW
+BEGIN
+    DECLARE v_sede_id INT;
+
+    SELECT sede_id
+    INTO v_sede_id
+    FROM pedidos
+    WHERE id = NEW.pedido_id;
+
+    IF NEW.cantidad > 0 THEN
+        UPDATE inventario
+        SET stock_actual = stock_actual - NEW.cantidad
+        WHERE sede_id = v_sede_id
+          AND producto_id = NEW.producto_id;
+    END IF;
 END //
 DELIMITER ;
 
